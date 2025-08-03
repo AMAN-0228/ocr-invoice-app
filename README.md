@@ -5,10 +5,11 @@ A modern web application for extracting invoice data using OCR technology. Built
 ## Features
 
 - 📄 **File Upload**: Drag & drop support for PDF and image files
-- 🔍 **OCR Processing**: Extract invoice data using Mindee Invoice OCR API
+- 🔍 **OCR Processing**: Extract invoice data using Google Cloud Document AI (Invoice Parser)
 - 📊 **Dashboard**: Overview of invoices and processing statistics
 - 📋 **Invoice List**: View and manage all processed invoices
 - 👤 **User Profile**: Account settings and preferences
+- 🧠 **Caching**: Smart user-level cache for storing and retrieving OCR data
 - 🎨 **Modern UI**: Beautiful interface built with ShadCN and Tailwind CSS
 
 ## Tech Stack
@@ -17,7 +18,8 @@ A modern web application for extracting invoice data using OCR technology. Built
 - **Styling**: Tailwind CSS
 - **UI Components**: ShadCN UI
 - **File Upload**: React Dropzone
-- **OCR Service**: Mindee Invoice API
+- **OCR Service**: Google Cloud Document AI (Invoice Parser)
+- **Database**: PostgreSQL with Prisma ORM
 - **Icons**: Lucide React
 - **Notifications**: Sonner
 
@@ -27,7 +29,7 @@ A modern web application for extracting invoice data using OCR technology. Built
 
 - Node.js 18+ 
 - npm or yarn
-- Mindee API key (for OCR functionality)
+- Google Cloud Document AI credentials
 
 ### Installation
 
@@ -45,7 +47,11 @@ npm install
 3. Set up environment variables:
 Create a `.env.local` file in the root directory:
 ```env
-MINDEE_API_KEY=your_mindee_api_key_here
+GOOGLE_PROJECT_ID=your_project_id
+GOOGLE_CLIENT_EMAIL=your_service_account_email
+GOOGLE_PRIVATE_KEY=your_private_key
+GOOGLE_LOCATION=your_processor_location
+GOOGLE_PROCESSOR_ID=your_invoice_processor_id
 ```
 
 4. Run the development server:
@@ -58,6 +64,9 @@ npm run dev
 ## Project Structure
 
 ```
+├── prisma/
+│   ├── schema.prisma
+│   └── migrations/
 src/
 ├── app/
 │   ├── api/
@@ -77,20 +86,22 @@ src/
 │   ├── ui/                       # ShadCN UI components
 │   ├── header.tsx                # Navigation header
 │   └── navigation.tsx            # Navigation component
-└── lib/
-    └── utils.ts                  # Utility functions
+├── lib/
+│   └── utils.ts                  # Utility functions
+└── types/
+    └── invoice.d.ts             # TypeScript types
 ```
 
 ## API Integration
 
-### Mindee Invoice OCR API
+### Google Cloud Document AI (Invoice Parser)
 
-The app integrates with Mindee's Invoice OCR API to extract structured data from invoice documents.
+The app integrates with Google's Document AI to extract structured data from invoice documents.
 
 **Setup:**
-1. Sign up for a Mindee account at [mindee.com](https://mindee.com)
-2. Get your API key from the dashboard
-3. Add the API key to your `.env.local` file
+1. Enable Document AI API in your Google Cloud Console
+2. Create a service account and download the credentials JSON
+3. Extract required fields and set them in `.env.local`
 
 **Supported File Types:**
 - PDF files
@@ -103,6 +114,7 @@ The app integrates with Mindee's Invoice OCR API to extract structured data from
 - Vendor/supplier information
 - Total amount
 - Line items (description, quantity, price, total)
+- Payment terms, due date, tax details, etc.
 
 ## Pages
 
@@ -161,7 +173,11 @@ All API routes are located in `src/app/api/` following Next.js 13+ App Router co
 Make sure to set these environment variables in production:
 
 ```env
-MINDEE_API_KEY=your_production_mindee_api_key
+GOOGLE_PROJECT_ID=your_production_project_id
+GOOGLE_CLIENT_EMAIL=your_service_account_email
+GOOGLE_PRIVATE_KEY=your_private_key
+GOOGLE_LOCATION=your_invoice_processor_location
+GOOGLE_PROCESSOR_ID=your_invoice_processor_id
 ```
 
 ## Contributing
