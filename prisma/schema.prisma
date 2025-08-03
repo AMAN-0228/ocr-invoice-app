@@ -1,0 +1,198 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// ------------------------------------
+// Datasource & Generator
+// ------------------------------------
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider     = "postgresql"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+// ------------------------------------
+// Customer Model
+// ------------------------------------
+model Customer {
+  id        Int      @id @default(autoincrement())
+  name      String
+  code      String   @unique
+  active    Boolean
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users     User[]
+  invoices  Invoice[]
+  items     InvoiceItem[]
+  UserCache UserCache[]
+
+  @@map("Customers")
+}
+
+// ------------------------------------
+// User Model
+// ------------------------------------
+model User {
+  id            Int       @id @default(autoincrement())
+  name          String
+  email         String?   @unique
+  code          String
+  reference     String
+  customerId    Int
+  active        Boolean
+  emailVerified DateTime?
+  image         String?
+  password      String? // For credentials login
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customer Customer      @relation(fields: [customerId], references: [id])
+  invoices Invoice[]
+  accounts Account[]
+  sessions Session[]
+  items    InvoiceItem[]
+
+  UserAccess UserAccess?
+  UserCache  UserCache[]
+
+  @@map("Users")
+}
+
+// ------------------------------------
+// Account Model (used by NextAuth.js)
+// ------------------------------------
+model Account {
+  id                Int     @id @default(autoincrement())
+  userId            Int
+  type              String
+  provider          String
+  providerAccountId String
+  access_token      String?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([provider, providerAccountId])
+  @@map("Accounts")
+}
+
+// ------------------------------------
+// Session Model (used by NextAuth.js)
+// ------------------------------------
+model Session {
+  id           Int      @id @default(autoincrement())
+  sessionToken String   @unique
+  userId       Int
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("Sessions")
+}
+
+// ------------------------------------
+// VerificationToken Model (used by NextAuth.js)
+// ------------------------------------
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("VerificationTokens")
+}
+
+// ------------------------------------
+// Invoice Model
+// ------------------------------------
+model Invoice {
+  id          Int      @id @default(autoincrement())
+  customerId  Int
+  userId      Int
+  code        String
+  reference   String
+  status      String
+  subject     String
+  totalAmount Float
+  taxValue    Float
+  subTotal    Float
+  active      Boolean
+  invoiceDate DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  customer Customer      @relation(fields: [customerId], references: [id])
+  user     User          @relation(fields: [userId], references: [id])
+  items    InvoiceItem[]
+
+  @@map("Invoices")
+}
+
+// ------------------------------------
+// InvoiceItem Model
+// ------------------------------------
+model InvoiceItem {
+  id         Int      @id @default(autoincrement())
+  invoiceId  Int
+  customerId Int
+  userId     Int
+  code       String
+  reference  String
+  status     String
+  sno        Int
+  quantity   Int
+  price      Float
+  total      Float
+  tax        Float
+  active     Boolean
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  invoice  Invoice  @relation(fields: [invoiceId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@map("InvoiceItems")
+}
+
+model UserAccess {
+  id     Int  @id @default(autoincrement())
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id])
+
+  canCreate  Boolean @default(false)
+  canView    Boolean @default(false)
+  canEdit    Boolean @default(false)
+  canApprove Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("UserAccesses")
+}
+
+model UserCache {
+  id         Int     @id @default(autoincrement())
+  userId     Int
+  customerId Int
+  data       Json
+  active     Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id])
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@map("UserCaches")
+}
